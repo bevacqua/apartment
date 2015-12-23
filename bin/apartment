@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var fs = require('fs');
+var argv = require('minimist')(process.argv.slice(2), {
+  alias: {
+    properties: ['p', 'props']
+  },
+  default: {
+    properties: []
+  }
+});
+var stdin = require('get-stdin');
+var apartment = require('..');
+var ok;
+
+if (typeof argv.properties === 'string') {
+  argv.p = argv.props = argv.properties = argv.properties.split(',');
+}
+
+if (argv._.length) {
+  go(read(argv._[0]));
+} else {
+  stdin().then(go);
+  setTimeout(die, 100);
+}
+
+function read (file) {
+  return fs.readFileSync(file, { encoding: 'utf8' });
+}
+
+function go (data) {
+  ok = true;
+  var diff = apartment(data, argv);
+  process.stdout.write(diff);
+  process.exit();
+}
+
+function die () {
+  if (ok) {
+    return;
+  }
+  console.log([
+    'usage:',
+    '  apartment <file> [OPTIONS]',
+    '    --properties <props>,   a comma-separated list of properties to remove',
+    'result:',
+    '  <diff>'
+  ].join('\n'));
+  process.exit();
+}
