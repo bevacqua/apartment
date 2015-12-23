@@ -17,9 +17,9 @@ npm install apartment --save
 using the api:
 
 ```js
-apartment('.foo{font-size:12px;font-weight:bold}', { properties: 'font-size' })
+apartment('.foo{font-size:12px;font-weight:bold}', { properties: ['font-size'] })
 // <- '.foo{font-weight:bold}'
-apartment('.foo{font-size:12px;}', { properties: 'font-size' })
+apartment('.foo{font-size:12px;}', { properties: ['font-size'] })
 // <- ''
 ```
 
