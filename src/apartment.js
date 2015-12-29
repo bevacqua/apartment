@@ -3,16 +3,21 @@
 var _ = require('lodash');
 var css = require('css');
 
-function toRegExp (text) {
-  return new RegExp('^' + text + '$');
-}
+function toRegExp (text) { return new RegExp(text); }
+function toRegExpExact (text) { return new RegExp('^' + text + '$'); }
 
 function api (stylesheet, options) {
   var sheet = css.parse(stylesheet);
   var sheetRules = sheet.stylesheet.rules;
-  var props = options.properties.map(toRegExp);
+  var o = options || {};
 
-  _.forEach(sheetRules, inspectRuleset);
+  if (!Array.isArray(o.properties)) { o.properties = []; }
+  if (!Array.isArray(o.selectors)) { o.selectors = []; }
+
+  var props = o.properties.map(toRegExpExact);
+  var selectors = o.selectors.map(toRegExp);
+
+  _.forEachRight(sheetRules, inspectRuleset);
 
   return result();
 
@@ -41,12 +46,21 @@ function api (stylesheet, options) {
 
     function inspectRules (rules) {
       _.forEach(rules, inspectDeclarations);
+      _.remove(rules, matchesSelector);
     }
 
     function inspectDeclarations (rule) {
       if (rule.declarations) {
         rule.declarations = rule.declarations.filter(keepPropertyDeclaration);
       }
+    }
+
+    function matchesSelector (rule) {
+      return _.some(rule.selectors, function (selector) {
+        return _.some(selectors, function (comparer) {
+            return comparer.test(selector);
+          });
+      });
     }
 
     function keepPropertyDeclaration (declaration) {
