@@ -29,7 +29,7 @@ function read (file) {
 function assert (fixture, key) {
   test('test case fixture: ' + key, function (t) {
     var diff = apartment(read(fixture.input), JSON.parse(read(fixture.options)));
-    t.equal(diff, read(fixture.result), 'result should match expectation');
+    t.equal(read(fixture.result), diff, 'result should match expectation');
     t.end();
   });
 }

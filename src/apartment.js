@@ -17,57 +17,52 @@ function api (stylesheet, options) {
   var props = o.properties.map(toRegExpExact);
   var selectors = o.selectors.map(toRegExp);
 
+  inspectRules(sheetRules);
   _.forEachRight(sheetRules, inspectRuleset);
 
   return result();
 
-  function inspectRuleset (inspected, parent) {
-    var forEachVictim = typeof parent === 'number';
-    if (forEachVictim) {
-      parent = false;
-    }
-    if (inspected.type === 'rule') {
-      if (parent) {
-        _(sheetRules)
-          .where({ type: 'media', media: parent.media })
-          .pluck('rules')
-          .value()
-          .forEach(inspectRules);
-      } else {
-        inspectRules(sheetRules);
-      }
-    } else if (inspected.type === 'media') {
-      inspected.rules.forEach(inspectRulesetInMedia);
-    }
-
-    function inspectRulesetInMedia (rule) {
-      inspectRuleset(rule, inspected);
-    }
-
-    function inspectRules (rules) {
-      _.forEach(rules, inspectDeclarations);
-      _.remove(rules, matchesSelector);
-    }
-
-    function inspectDeclarations (rule) {
-      if (rule.declarations) {
-        rule.declarations = rule.declarations.filter(keepPropertyDeclaration);
-      }
-    }
-
-    function matchesSelector (rule) {
-      return _.some(rule.selectors, function (selector) {
-        return _.some(selectors, function (comparer) {
-            return comparer.test(selector);
-          });
+  function inspectRuleset (inspected) {
+    if (inspected.type === 'media') {
+      inspected.rules.forEach(function (rule) {
+        inspectRulesetInMedia(rule, inspected);
       });
     }
+  }
 
-    function keepPropertyDeclaration (declaration) {
-      return props.every(notMatching);
-      function notMatching (prop) {
-        return prop.test(declaration.property) === false;
-      }
+  function inspectRulesetInMedia (rule, parent) {
+    if (rule.type === 'rule') {
+      _(sheetRules)
+        .where({ type: 'media', media: parent.media })
+        .pluck('rules')
+        .value()
+        .forEach(inspectRules);
+    }
+  }
+
+  function inspectRules (rules) {
+    _.forEach(rules, inspectDeclarations);
+    _.remove(rules, matchesSelector);
+  }
+
+  function inspectDeclarations (rule) {
+    if (rule.declarations) {
+      rule.declarations = rule.declarations.filter(keepPropertyDeclaration);
+    }
+  }
+
+  function matchesSelector (rule) {
+    return _.some(rule.selectors, function (selector) {
+      return _.some(selectors, function (comparer) {
+          return comparer.test(selector);
+        });
+    });
+  }
+
+  function keepPropertyDeclaration (declaration) {
+    return props.every(notMatching);
+    function notMatching (prop) {
+      return prop.test(declaration.property) === false;
     }
   }
 
